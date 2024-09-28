@@ -1,4 +1,6 @@
-# If you're experiencing issues with false signals or noise in the reset button circuit (often due to long wires, electrical interference, or bouncing), there are several ways to fix or improve the circuit:
+#false signals
+
+Suppose you're experiencing issues with false signals or noise in the reset button circuit (often due to long wires, electrical interference, or bouncing). In that case, there are several ways to fix or improve the circuit:
 
 ## 1. Use Hardware Debouncing (Capacitor + Resistor):
 A common cause of false signals is button bounce, where the contacts make and break several times when pressed. A hardware debounce circuit using a resistor and capacitor can help smooth out these fluctuations.
