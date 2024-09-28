@@ -1,4 +1,4 @@
-#false signals
+# false signals
 
 Suppose you're experiencing issues with false signals or noise in the reset button circuit (often due to long wires, electrical interference, or bouncing). In that case, there are several ways to fix or improve the circuit:
 
