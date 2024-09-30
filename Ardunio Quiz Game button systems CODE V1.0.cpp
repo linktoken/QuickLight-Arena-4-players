@@ -12,7 +12,7 @@ const int standbyLEDPin = 13;           // Pin for standby LED
 int winner = -1; // Player who has won (-1 means no winner)
 bool gameEnded = false; // Flag to indicate if the game has ended
 unsigned long previousMillis = 0; // Store the last time the LED was updated
-const long interval = 500; // Interval for blinking (500 milliseconds)
+const long interval = 300; // Interval for blinking (300 milliseconds)
 
 void setup() {
   // Initialize button pins as inputs with pull-up resistors
