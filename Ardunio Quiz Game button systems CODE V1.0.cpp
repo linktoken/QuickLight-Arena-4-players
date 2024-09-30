@@ -1,3 +1,6 @@
+//Code version 1.0
+//Create by kncm_ken@hotmail.co.th (kittipon.n)
+
 // Define pins for buttons and LEDs
 const int buttonPins[] = {2, 3, 4, 5};  // Pins for player buttons
 const int ledPins[] = {6, 7, 8, 9};     // Pins for player LEDs
