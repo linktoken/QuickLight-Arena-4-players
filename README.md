@@ -30,7 +30,7 @@ If you're still facing signal problems despite hardware fixes, increasing the de
 
 Increase the debounceDelay from 50 ms to something like 100 ms in the code:
 
-    const long debounceDelay = 100;  // Increase debounce time to 100 ms
+    const unsigned long DEBOUNCE_DELAY = 50;
 
 ## 6. Pull-up/Pull-down Resistor Configuration:
 Ensure that your button is using proper pull-up or pull-down resistors to define a default state when the button is not pressed.
