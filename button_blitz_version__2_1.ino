@@ -1,7 +1,6 @@
 // Improved Game Controller with Reset Fix
 // Version 2.1
 // Original by kncm_ken@hotmail.co.th (kittipon n.)
-// Improvements by Claude
 
 #include <Arduino.h>
 
