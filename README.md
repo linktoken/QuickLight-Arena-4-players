@@ -1,67 +1,64 @@
-# False signals problem fixing guide.
+# QuickLight Arena
 
-Suppose you're experiencing issues with false signals or noise in the reset button circuit (often due to long wires, electrical interference, or bouncing). In that case, there are several ways to fix or improve the circuit:
+QuickLight Arena is a multi-player reaction game built for Arduino. Players compete to be the first to press their button when the game starts, with LED indicators showing the winner.
 
-## 1. Use Hardware Debouncing (Capacitor + Resistor):
-A common cause of false signals is button bounce, where the contacts make and break several times when pressed. A hardware debounce circuit using a resistor and capacitor can help smooth out these fluctuations.
+## Features
 
-**Capacitor:** Place a small capacitor (e.g., 0.1 µF) across the button terminals to filter out noise.
+- Supports up to 4 players
+- LED indicators for each player and game status
+- Continuous reset functionality for quick game restarts
+- Debounced inputs for reliable button presses
 
-**Pull-down Resistor:** Use a resistor (e.g., 10 kΩ) between the button pin and ground to keep the signal low when the button is not pressed.
+## Hardware Requirements
 
-### Circuit Example:
+- 1x Arduino board (e.g., Arduino Uno)
+- 4x Push buttons (one for each player)
+- 2x Push buttons for reset
+- 6x LEDs (4 for players, 1 for reset, 1 for standby)
+- 6x 220Ω resistors (for LEDs)
+- Jumper wires
+- Breadboard (optional, for prototyping)
 
-One side of the button connects to the input pin.
-The other side connects to both a 10 kΩ resistor to ground and a 0.1 µF capacitor across the button.
+## Pin Configuration
 
-## 2. Use Shielded Cables:
-If you're using long wires for your buttons, electromagnetic interference (EMI) can induce noise in the signal. Using shielded cables can help minimize interference from nearby electronics or power lines.
+- Player Buttons: Digital pins 2, 3, 4, 5
+- Player LEDs: Digital pins 6, 7, 8, 9
+- Reset Button 1: Digital pin 10
+- Reset Button 2: Digital pin 12
+- Reset LED: Digital pin 11
+- Standby LED: Digital pin 13
 
-Ground the shielding of the wire to reduce noise.
+## Installation
 
-## 3. Twist the Wires:
-Twisted pair wiring can reduce noise by canceling out the electromagnetic interference picked up by each wire. Twisting the signal wire and ground together can be a simple but effective method.
+1. Clone this repository or download the source code.
+2. Open the `button_blitz_version__2_2.ino` file in the Arduino IDE. (also the latest version)
+3. Connect your Arduino board to your computer.
+4. Select the correct board and port in the Arduino IDE.
+5. Click the "Upload" button to flash the code to your Arduino.
 
-## 4. Use Shorter Wires:
-If possible, try to shorten the length of the wires going from the reset button to the Arduino. Long wires can act as antennas, picking up noise and causing erratic signals.
+## How to Play
 
-## 5. Add More Software Debouncing:
-If you're still facing signal problems despite hardware fixes, increasing the debounce time in the code can help. This will filter out any additional noise or spikes.
+1. When the game starts, the Standby LED will be lit.
+2. Players should place their fingers on their respective buttons.
+3. When the Standby LED turns off, the first player to press their button wins.
+4. The winner's LED will light up.
+5. To start a new game, press and hold either reset button for at least 300ms.
+6. Holding the reset button will cause the game to reset repeatedly.
 
-Increase the debounceDelay from 50 ms to something like 100 ms in the code:
+## Customization
 
-    const unsigned long DEBOUNCE_DELAY = 50;
+We need a bigger Arduino board like Mega Family.
 
-## 6. Pull-up/Pull-down Resistor Configuration:
-Ensure that your button is using proper pull-up or pull-down resistors to define a default state when the button is not pressed.
+You can adjust the following constants in the code to customize the game behavior:
 
-You can use internal pull-up resistors in the Arduino, which you've already enabled in the code with
+- `NUM_PLAYERS`: Change the number of supported players (default: 4)
+- `RESET_HOLD_TIME`: Adjust the time required to hold the reset button for the first reset (default: 300ms)
+- `RESET_REPEAT_INTERVAL`: Change the interval between resets when holding the button (default: 500ms)
 
-    INPUT_PULLUP
+## Contributing
 
-If you prefer a pull-down resistor (so the default state is LOW), you'll need to wire an external resistor between the button pin and ground.
+Contributions to QuickLight Arena are welcome! Please feel free to submit a Pull Request.
 
-## 7. Power Supply Stability:
-Ensure your power supply is stable and not introducing noise into the circuit. If the power is fluctuating, it could cause unpredictable behavior in your buttons. Using decoupling capacitors (e.g., 0.1 µF and 10 µF) across the power supply pins near the Arduino can help stabilize the voltage.
+## License
 
-### Example Circuit for Reset Button:
-
-
-     +5V --- Button --- Input Pin
- 
-               |
-           
-              ---
-          
-             |   | 
-         
-           10kΩ  0.1 µF
-       
-             |   |
-           
-            GND  GND
-
-
-This setup with a resistor and capacitor helps filter out noise and provides a more stable signal for the reset button input.
-
-By combining some of these techniques, you should be able to eliminate false triggers and improve the reliability of your reset button circuit.
+This project is open source and available under the [MIT License](LICENSE).
