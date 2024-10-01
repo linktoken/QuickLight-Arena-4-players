@@ -52,8 +52,7 @@ We need a bigger Arduino board like Mega Family.
 You can adjust the following constants in the code to customize the game behavior:
 
 - `NUM_PLAYERS`: Change the number of supported players (default: 4)
-- `RESET_HOLD_TIME`: Adjust the time required to hold the reset button for the first reset (default: 300ms)
-- `RESET_REPEAT_INTERVAL`: Change the interval between resets when holding the button (default: 500ms)
+- `RESET_HOLD_TIME`: Adjust the time required to hold the reset button for the reset (default: 300ms)
 
 ## Contributing
 
