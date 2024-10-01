@@ -1,8 +1,7 @@
 // QuickLight Arena
 // A multi-player reaction game with LED indicators
 // Version 2.2
-// Original concept by kncm_ken@hotmail.co.th (kittipon n.)
-// Improvements and naming by Claude
+// Original by kncm_ken@hotmail.co.th (kittipon n.)
 
 #include <Arduino.h>
 
