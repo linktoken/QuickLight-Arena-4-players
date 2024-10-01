@@ -16,7 +16,7 @@ const uint8_t RESET_LED_PIN = 11;
 const uint8_t STANDBY_LED_PIN = 13;
 const unsigned long BLINK_INTERVAL = 300; // milliseconds
 const unsigned long DEBOUNCE_DELAY = 50; // milliseconds
-const unsigned long RESET_HOLD_TIME = 300; // milliseconds to hold for reset
+const unsigned long RESET_HOLD_TIME = 100; // milliseconds to hold for reset
 const unsigned long RESET_BLOCK_TIME = 1000; // milliseconds to block reset after game start
 
 // Game state
