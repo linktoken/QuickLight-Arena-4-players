@@ -53,6 +53,7 @@ You can adjust the following constants in the code to customize the game behavio
 
 - `NUM_PLAYERS`: Change the number of supported players (default: 4)
 - `RESET_HOLD_TIME`: Adjust the time required to hold the reset button for the reset (default: 300ms)
+- `BLINK_INTERVAL`: Adjust the time for reset LED blinking (default: 300ms)
 
 ## Contributing
 
