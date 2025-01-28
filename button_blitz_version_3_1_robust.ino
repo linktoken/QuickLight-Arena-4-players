@@ -1,5 +1,9 @@
+// QuickLight Arena
+// A multi-player reaction game with LED indicators
+// Version 3.0
+// Original concept by kncm_ken@hotmail.co.th (kittipon n.)
+
 #include <Arduino.h>
-#include <avr/sleep.h>
 
 // Pin Configuration
 struct PinConfig {
@@ -22,13 +26,13 @@ struct TimingConfig {
   const unsigned long startDelayMin = 1000;     // ms
   const unsigned long startDelayMax = 5000;     // ms
   const unsigned long falseStartPenalty = 2000; // ms
-  const unsigned long sleepTimeout = 30000;     // ms
+  const unsigned long idleTimeout = 30000;      // ms
   const unsigned long errorBlinkTime = 500;     // ms
 };
 
 // Game States
 enum class GameState {
-  SLEEP,
+  IDLE,
   STANDBY,
   COUNTDOWN,
   PLAYING,
@@ -130,18 +134,14 @@ private:
     return !resetButtons[0].debounced || !resetButtons[1].debounced;
   }
   
-  void enterSleepMode() {
-    allLEDsOff();
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    sleep_enable();
-    sleep_mode();
-    // Code resumes here after wake up
-    sleep_disable();
-    lastActivityTime = millis();
-    currentState = GameState::STANDBY;
-  }
-  
-  void handleSleepState() {
+  void handleIdleState() {
+    // Dim all LEDs in idle state
+    if (millis() - lastBlinkTime >= timing.blinkInterval * 4) {
+      lastBlinkTime = millis();
+      isBlinkOn = !isBlinkOn;
+      digitalWrite(pins.standbyLED, isBlinkOn);
+    }
+    
     if (isAnyButtonPressed()) {
       wakeUp();
     }
@@ -269,11 +269,11 @@ public:
   void update() {
     updateAllButtons();
     
-    // Check for sleep timeout
-    if (currentState != GameState::SLEEP && 
+    // Check for idle timeout
+    if (currentState != GameState::IDLE && 
         currentState != GameState::ERROR &&
-        (millis() - lastActivityTime) > timing.sleepTimeout) {
-      currentState = GameState::SLEEP;
+        (millis() - lastActivityTime) > timing.idleTimeout) {
+      currentState = GameState::IDLE;
     }
     
     // Handle reset button
@@ -284,8 +284,8 @@ public:
     
     // State machine
     switch (currentState) {
-      case GameState::SLEEP:
-        handleSleepState();
+      case GameState::IDLE:
+        handleIdleState();
         break;
       case GameState::STANDBY:
         handleStandbyState();
