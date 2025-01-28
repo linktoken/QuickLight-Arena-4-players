@@ -18,6 +18,7 @@ QuickLight Arena is a multi-player reaction game built for Arduino. Players comp
 - 6x 220Ω resistors (for LEDs)
 - Jumper wires
 - Breadboard (optional, for prototyping)
+- Footswitch (for code version 3.0 and newer)
 
 ## Pin Configuration
 
@@ -27,11 +28,12 @@ QuickLight Arena is a multi-player reaction game built for Arduino. Players comp
 - Reset Button 2: Digital pin 12
 - Reset LED: Digital pin 11
 - Standby LED: Digital pin 13
+- Footswitch : pin 1
 
 ## Installation
 
 1. Clone this repository or download the source code.
-2. Open the `button_blitz_version__2_2.ino` file in the Arduino IDE. (also the latest version)
+2. Open the `button_blitz_version__3_0.ino` file in the Arduino IDE. (also the latest version)
 3. Connect your Arduino board to your computer.
 4. Select the correct board and port in the Arduino IDE.
 5. Click the "Upload" button to flash the code to your Arduino.
