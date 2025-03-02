@@ -28,7 +28,7 @@ QuickLight Arena is a multi-player reaction game built for Arduino. Players comp
 - Reset Button 2: Digital pin 12
 - Reset LED: Digital pin 11
 - Standby LED: Digital pin 13
-- Footswitch : pin 1
+- Footswitch : pin A5
 
 ## Installation
 
