@@ -20,6 +20,7 @@ QuickLight Arena is a multi-player reaction game built for Arduino. Players comp
 - Jumper wires
 - Breadboard (optional, for prototyping)
 - Footswitch (for code version 3.0 and newer)
+- Siren sound device
 
 ## Pin Configuration
 
