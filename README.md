@@ -67,26 +67,3 @@ Contributions to QuickLight Arena are welcome! Please feel free to submit a Pull
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
-
-## Change Log - Version 3.0
-Release Date: March 2025
-
-New Features & Changes:
-- Foot Switch Moved to A5
-
-Previously on A1, now correctly assigned to A5 for better wiring and functionality.
-- Foot Switch Prevents Player Button Presses
-
-While the foot switch is held, all player buttons are disabled to ensure proper control.
-- Manual Reset Only (No Auto-Reset)
-
-After a player wins, their LED blinks indefinitely until the game is manually reset.
-Game only resets when a reset button or the foot switch (A5) is pressed.
-- Improved Reset Handling
-
-Added debounce protection for reset buttons and foot switch to prevent accidental resets.
-Reset LED stays ON until the game is reset.
-- Optimized Code Structure
-
-Cleaned up loop logic for better efficiency.
-Improved function readability and structure.
