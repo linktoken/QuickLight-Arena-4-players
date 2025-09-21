@@ -1,0 +1,166 @@
+// Code version 3.2.0
+/*Change Log - Version 3.2.0
+Release Date: September 2025
+
+New Features & Changes:
+✅ Multi-Player LED Control
+
+Changed from single winner detection to multi-player LED control.
+Each player can independently press their button to turn on their LED.
+LEDs remain ON until reset button is pressed.
+Multiple players can have their LEDs on simultaneously.
+
+✅ Removed Winner Logic
+
+Removed single winner detection and winner-specific functionality.
+All players are treated equally - no single winner concept.
+
+✅ Siren Control Disabled
+
+Siren relay functionality is now disabled by default.
+Set sirenEnabled = true in code if siren functionality is needed.
+Siren pin (A4) is maintained for future use but remains inactive.
+
+Previous Changes (Version 3.1.0):
+✅ Added Siren Relay Trigger on A4
+✅ Changed Winner LED Behavior to stay continuously ON
+✅ Foot Switch Moved to A5 and prevents player button presses
+✅ Manual Reset Only (No Auto-Reset)
+✅ Improved Reset Handling with debounce protection
+*/
+
+// Created by kncm_ken@hotmail.co.th (Kittipon N)
+// Modified on September 2025 to allow multi-player LED control
+
+// Pin definitions
+const int buttonPins[] = {2, 3, 4, 5};  // Player button pins
+const int ledPins[] = {6, 7, 8, 9};     // Player LED pins
+const int resetButtonPins[] = {10, 12}; // Reset buttons
+const int resetLEDPin = 11;             // Reset LED
+const int standbyLEDPin = 13;           // Standby LED
+const int footSwitchPin = A5;           // Foot switch
+const int sirenRelayPin = A4;           // Siren relay trigger output on A4
+
+// Constants
+const long debounceDelay = 50;          // Debounce time for buttons (in ms)
+
+// Variables
+bool playerLEDStates[] = {false, false, false, false};  // Track each player's LED state
+bool anyPlayerActive = false;                           // Track if any player is active
+unsigned long lastDebounceTimes[7] = {0, 0, 0, 0, 0, 0, 0};  // Debounce timers: 4 for players, 2 for reset, 1 for foot switch
+
+// Siren control (disabled)
+bool sirenEnabled = false;              // Set to true if you want siren functionality
+
+void setup() {
+  // Initialize button and LED pins
+  for (int i = 0; i < 4; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW);  // Ensure all LEDs start OFF
+  }
+
+  for (int i = 0; i < 2; i++) {
+    pinMode(resetButtonPins[i], INPUT_PULLUP);
+  }
+
+  pinMode(resetLEDPin, OUTPUT);
+  pinMode(standbyLEDPin, OUTPUT);
+  pinMode(footSwitchPin, INPUT_PULLUP);
+  pinMode(sirenRelayPin, OUTPUT);
+  
+  digitalWrite(standbyLEDPin, HIGH);    // Turn on standby LED initially
+  digitalWrite(resetLEDPin, LOW);       // Reset LED starts OFF
+  digitalWrite(sirenRelayPin, LOW);     // Initialize siren relay as OFF
+  
+  anyPlayerActive = false;
+}
+
+void loop() {
+  // Check player buttons only if foot switch is not pressed
+  if (digitalRead(footSwitchPin) == HIGH) {
+    checkPlayerButtons();
+  }
+  
+  // Update system state based on active players
+  updateSystemState();
+  
+  // Check reset inputs
+  checkResetButtons();
+}
+
+// Function to check player buttons and toggle their LEDs
+void checkPlayerButtons() {
+  unsigned long currentMillis = millis();
+  
+  for (int i = 0; i < 4; i++) {
+    if (digitalRead(buttonPins[i]) == LOW && (currentMillis - lastDebounceTimes[i]) > debounceDelay) {
+      lastDebounceTimes[i] = currentMillis;
+      
+      // Turn on the player's LED if not already on
+      if (!playerLEDStates[i]) {
+        playerLEDStates[i] = true;
+        digitalWrite(ledPins[i], HIGH);
+      }
+    }
+  }
+}
+
+// Update system state based on active players
+void updateSystemState() {
+  // Check if any player is active
+  anyPlayerActive = false;
+  for (int i = 0; i < 4; i++) {
+    if (playerLEDStates[i]) {
+      anyPlayerActive = true;
+      break;
+    }
+  }
+  
+  // Update standby LED and reset LED
+  if (anyPlayerActive) {
+    digitalWrite(standbyLEDPin, LOW);     // Turn off standby LED when players are active
+    digitalWrite(resetLEDPin, HIGH);      // Turn on reset LED to indicate reset is available
+    if (sirenEnabled) {
+      digitalWrite(sirenRelayPin, HIGH);  // Activate siren when any player is active (only if enabled)
+    }
+  } else {
+    digitalWrite(standbyLEDPin, HIGH);    // Turn on standby LED when no players are active
+    digitalWrite(resetLEDPin, LOW);       // Turn off reset LED when no players are active
+    digitalWrite(sirenRelayPin, LOW);     // Ensure siren is off when no players are active
+  }
+}
+
+// Check if any reset button or foot switch is pressed
+void checkResetButtons() {
+  unsigned long currentMillis = millis();
+
+  // Check reset buttons
+  for (int i = 0; i < 2; i++) {
+    if (digitalRead(resetButtonPins[i]) == LOW && (currentMillis - lastDebounceTimes[4 + i]) > debounceDelay) {
+      lastDebounceTimes[4 + i] = currentMillis;
+      resetGame();
+    }
+  }
+
+  // Foot switch as an additional reset option
+  if (digitalRead(footSwitchPin) == LOW && (currentMillis - lastDebounceTimes[6]) > debounceDelay) {
+    lastDebounceTimes[6] = currentMillis;
+    resetGame();
+  }
+}
+
+// Reset the game state and turn off all LEDs
+void resetGame() {
+  // Turn off all player LEDs and reset their states
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(ledPins[i], LOW);
+    playerLEDStates[i] = false;
+  }
+
+  // Reset system state
+  anyPlayerActive = false;
+  digitalWrite(resetLEDPin, LOW);
+  digitalWrite(standbyLEDPin, HIGH);
+  digitalWrite(sirenRelayPin, LOW);  // Turn off siren relay on reset
+}
