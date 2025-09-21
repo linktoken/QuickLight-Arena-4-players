@@ -1,8 +1,13 @@
 // Code version 3.2.0
-/*Change Log - Version 3.2.0
+/*Change Log - Version 3.2.1
 Release Date: September 2025
 
-New Features & Changes:
+Bug Fixes & Changes:
+✅ Fixed Array Index Issues
+
+Corrected debounce array indexing to prevent out-of-bounds access.
+Properly aligned debounce timers with button/switch indices.
+
 ✅ Multi-Player LED Control
 
 Changed from single winner detection to multi-player LED control.
@@ -47,7 +52,9 @@ const long debounceDelay = 50;          // Debounce time for buttons (in ms)
 // Variables
 bool playerLEDStates[] = {false, false, false, false};  // Track each player's LED state
 bool anyPlayerActive = false;                           // Track if any player is active
-unsigned long lastDebounceTimes[7] = {0, 0, 0, 0, 0, 0, 0};  // Debounce timers: 4 for players, 2 for reset, 1 for foot switch
+unsigned long playerButtonDebounce[4] = {0, 0, 0, 0};   // Debounce timers for player buttons
+unsigned long resetButtonDebounce[2] = {0, 0};          // Debounce timers for reset buttons  
+unsigned long footSwitchDebounce = 0;                   // Debounce timer for foot switch
 
 // Siren control (disabled)
 bool sirenEnabled = false;              // Set to true if you want siren functionality
@@ -94,8 +101,8 @@ void checkPlayerButtons() {
   unsigned long currentMillis = millis();
   
   for (int i = 0; i < 4; i++) {
-    if (digitalRead(buttonPins[i]) == LOW && (currentMillis - lastDebounceTimes[i]) > debounceDelay) {
-      lastDebounceTimes[i] = currentMillis;
+    if (digitalRead(buttonPins[i]) == LOW && (currentMillis - playerButtonDebounce[i]) > debounceDelay) {
+      playerButtonDebounce[i] = currentMillis;
       
       // Turn on the player's LED if not already on
       if (!playerLEDStates[i]) {
@@ -137,15 +144,16 @@ void checkResetButtons() {
 
   // Check reset buttons
   for (int i = 0; i < 2; i++) {
-    if (digitalRead(resetButtonPins[i]) == LOW && (currentMillis - lastDebounceTimes[4 + i]) > debounceDelay) {
-      lastDebounceTimes[4 + i] = currentMillis;
+    if (digitalRead(resetButtonPins[i]) == LOW && (currentMillis - resetButtonDebounce[i]) > debounceDelay) {
+      resetButtonDebounce[i] = currentMillis;
       resetGame();
+      return; // Exit after reset to prevent multiple resets
     }
   }
 
   // Foot switch as an additional reset option
-  if (digitalRead(footSwitchPin) == LOW && (currentMillis - lastDebounceTimes[6]) > debounceDelay) {
-    lastDebounceTimes[6] = currentMillis;
+  if (digitalRead(footSwitchPin) == LOW && (currentMillis - footSwitchDebounce) > debounceDelay) {
+    footSwitchDebounce = currentMillis;
     resetGame();
   }
 }
