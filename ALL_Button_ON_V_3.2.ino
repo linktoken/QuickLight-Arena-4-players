@@ -1,41 +1,6 @@
-// Code version 3.2.0
-/*Change Log - Version 3.2.1
-Release Date: September 2025
-
-Bug Fixes & Changes:
-✅ Fixed Array Index Issues
-
-Corrected debounce array indexing to prevent out-of-bounds access.
-Properly aligned debounce timers with button/switch indices.
-
-✅ Multi-Player LED Control
-
-Changed from single winner detection to multi-player LED control.
-Each player can independently press their button to turn on their LED.
-LEDs remain ON until reset button is pressed.
-Multiple players can have their LEDs on simultaneously.
-
-✅ Removed Winner Logic
-
-Removed single winner detection and winner-specific functionality.
-All players are treated equally - no single winner concept.
-
-✅ Siren Control Disabled
-
-Siren relay functionality is now disabled by default.
-Set sirenEnabled = true in code if siren functionality is needed.
-Siren pin (A4) is maintained for future use but remains inactive.
-
-Previous Changes (Version 3.1.0):
-✅ Added Siren Relay Trigger on A4
-✅ Changed Winner LED Behavior to stay continuously ON
-✅ Foot Switch Moved to A5 and prevents player button presses
-✅ Manual Reset Only (No Auto-Reset)
-✅ Improved Reset Handling with debounce protection
-*/
-
 // Created by kncm_ken@hotmail.co.th (Kittipon N)
-// Modified on September 2025 to allow multi-player LED control
+// Modified on September 2025 - Stability fix version
+
 
 // Pin definitions
 const int buttonPins[] = {2, 3, 4, 5};  // Player button pins
@@ -46,17 +11,20 @@ const int standbyLEDPin = 13;           // Standby LED
 const int footSwitchPin = A5;           // Foot switch
 const int sirenRelayPin = A4;           // Siren relay trigger output on A4
 
-// Constants
-const long debounceDelay = 50;          // Debounce time for buttons (in ms)
-const long resetDebounceDelay = 200;    // Longer debounce for reset to prevent accidental resets
+// Constants - ADJUSTED FOR STABILITY
+const long resetDebounceDelay = 200;    // Longer debounce for reset buttons (in ms)
+const int stableReadings = 10;          // Increased for better stability
+const long buttonHoldTime = 100;        // Increased minimum hold time (in ms)
+const int loopDelay = 5;                // Small delay in main loop for stability
 
 // Variables
-bool playerLEDStates[] = {false, false, false, false};  // Track each player's LED state
-bool playerButtonPressed[] = {false, false, false, false}; // Track if button was already detected as pressed
-bool anyPlayerActive = false;                           // Track if any player is active
-unsigned long playerButtonDebounce[4] = {0, 0, 0, 0};   // Debounce timers for player buttons
-unsigned long resetButtonDebounce[2] = {0, 0};          // Debounce timers for reset buttons  
-unsigned long footSwitchDebounce = 0;                   // Debounce timer for foot switch
+bool playerLEDStates[] = {false, false, false, false};      // Track each player's LED state
+int consecutiveLowCount[] = {0, 0, 0, 0};                  // Count consecutive LOW readings
+unsigned long firstLowTime[4] = {0, 0, 0, 0};              // When button first went LOW
+bool anyPlayerActive = false;                               // Track if any player is active
+unsigned long resetButtonDebounce[2] = {0, 0};             // Debounce timers for reset buttons  
+unsigned long footSwitchDebounce = 0;                      // Debounce timer for foot switch
+bool resetInProgress = false;                               // Prevent multiple resets
 
 // Siren control (disabled)
 bool sirenEnabled = false;              // Set to true if you want siren functionality
@@ -83,48 +51,75 @@ void setup() {
   digitalWrite(sirenRelayPin, LOW);     // Initialize siren relay as OFF
   
   anyPlayerActive = false;
+  resetInProgress = false;
+  
+  // Small startup delay for hardware stabilization
+  delay(100);
 }
 
 void loop() {
   // Check reset inputs first to ensure they have priority
   checkResetButtons();
   
-  // Check player buttons only if foot switch is not pressed
-  // Also skip if we just reset (to prevent immediate re-trigger)
-  if (digitalRead(footSwitchPin) == HIGH) {
-    checkPlayerButtons();
+  // Only process player buttons if not currently resetting
+  if (!resetInProgress) {
+    // Check player buttons only if foot switch is not pressed
+    if (digitalRead(footSwitchPin) == HIGH) {
+      checkPlayerButtons();
+    }
   }
   
   // Update system state based on active players
   updateSystemState();
+  
+  // CRITICAL: Small delay for stable readings
+  delay(loopDelay);
 }
 
-// Function to check player buttons and toggle their LEDs
+// Function to check player buttons - IMPROVED ANTI-FLASH VERSION
 void checkPlayerButtons() {
   unsigned long currentMillis = millis();
   
+  // Loop through ALL 4 players
   for (int i = 0; i < 4; i++) {
+    // Skip if LED is already ON for this player
+    if (playerLEDStates[i]) {
+      continue;
+    }
+    
     int buttonState = digitalRead(buttonPins[i]);
     
     // Button is pressed (LOW)
     if (buttonState == LOW) {
-      // Only register if not already pressed and debounce time has passed
-      if (!playerButtonPressed[i] && (currentMillis - playerButtonDebounce[i]) > debounceDelay) {
-        playerButtonPressed[i] = true;
-        playerButtonDebounce[i] = currentMillis;
+      // If this is the first LOW reading, record the time
+      if (consecutiveLowCount[i] == 0) {
+        firstLowTime[i] = currentMillis;
+      }
+      
+      // Increment consecutive LOW count
+      consecutiveLowCount[i]++;
+      
+      // Check if ALL conditions are met:
+      // 1. Enough consecutive LOW readings
+      // 2. Button held long enough
+      // 3. Time check to ensure readings happened over actual time (not instant)
+      if (consecutiveLowCount[i] >= stableReadings && 
+          (currentMillis - firstLowTime[i]) >= buttonHoldTime) {
         
-        // Turn on the player's LED if not already on
-        if (!playerLEDStates[i]) {
-          playerLEDStates[i] = true;
-          digitalWrite(ledPins[i], HIGH);
-        }
+        // ALL CONDITIONS MET - Turn on LED permanently
+        playerLEDStates[i] = true;
+        digitalWrite(ledPins[i], HIGH);
+        
+        // Reset counter
+        consecutiveLowCount[i] = 0;
       }
     } 
-    // Button is released (HIGH)
+    // Button is released (HIGH) or not pressed
     else {
-      // Reset the pressed flag when button is released
-      if (playerButtonPressed[i]) {
-        playerButtonPressed[i] = false;
+      // Button released before conditions met - reset counter, NO LED CHANGE
+      if (consecutiveLowCount[i] > 0) {
+        consecutiveLowCount[i] = 0;
+        firstLowTime[i] = 0;
       }
     }
   }
@@ -155,33 +150,49 @@ void updateSystemState() {
   }
 }
 
-// Check if any reset button or foot switch is pressed
+// Check if any reset button or foot switch is pressed - IMPROVED
 void checkResetButtons() {
   unsigned long currentMillis = millis();
 
-  // Check reset buttons with longer debounce delay
+  // Prevent checking during reset
+  if (resetInProgress) {
+    return;
+  }
+
+  // Check reset buttons with debounce
   for (int i = 0; i < 2; i++) {
-    if (digitalRead(resetButtonPins[i]) == LOW && (currentMillis - resetButtonDebounce[i]) > resetDebounceDelay) {
-      resetButtonDebounce[i] = currentMillis;
-      resetGame();
-      return; // Exit after reset to prevent multiple resets
+    if (digitalRead(resetButtonPins[i]) == LOW) {
+      if ((currentMillis - resetButtonDebounce[i]) > resetDebounceDelay) {
+        resetButtonDebounce[i] = currentMillis;
+        resetGame();
+        return; // Exit after reset
+      }
     }
   }
 
-  // Foot switch as an additional reset option with longer debounce
-  if (digitalRead(footSwitchPin) == LOW && (currentMillis - footSwitchDebounce) > resetDebounceDelay) {
+  // Foot switch as reset - ONLY when pressed deliberately
+  // Must be held LOW continuously
+  if (digitalRead(footSwitchPin) == LOW) {
+    if ((currentMillis - footSwitchDebounce) > resetDebounceDelay) {
+      footSwitchDebounce = currentMillis;
+      resetGame();
+    }
+  } else {
+    // Reset the foot switch debounce timer when not pressed
     footSwitchDebounce = currentMillis;
-    resetGame();
   }
 }
 
 // Reset the game state and turn off all LEDs
 void resetGame() {
-  // Turn off all player LEDs and reset their states
+  resetInProgress = true;
+  
+  // Reset ALL 4 players
   for (int i = 0; i < 4; i++) {
     digitalWrite(ledPins[i], LOW);
     playerLEDStates[i] = false;
-    playerButtonPressed[i] = false;  // Reset button pressed flags
+    consecutiveLowCount[i] = 0;
+    firstLowTime[i] = 0;
   }
 
   // Reset system state
@@ -189,4 +200,9 @@ void resetGame() {
   digitalWrite(resetLEDPin, LOW);
   digitalWrite(standbyLEDPin, HIGH);
   digitalWrite(sirenRelayPin, LOW);  // Turn off siren relay on reset
+  
+  // Small delay to ensure reset completes
+  delay(50);
+  
+  resetInProgress = false;
 }
