@@ -47,11 +47,12 @@ const int footSwitchPin = A5;           // Foot switch
 const int sirenRelayPin = A4;           // Siren relay trigger output on A4
 
 // Constants
-const long debounceDelay = 100;         // Increased debounce time for buttons (in ms)
-const long resetDebounceDelay = 150;    // Longer debounce for reset to prevent accidental resets
+const long debounceDelay = 50;          // Debounce time for buttons (in ms)
+const long resetDebounceDelay = 200;    // Longer debounce for reset to prevent accidental resets
 
 // Variables
 bool playerLEDStates[] = {false, false, false, false};  // Track each player's LED state
+bool playerButtonPressed[] = {false, false, false, false}; // Track if button was already detected as pressed
 bool anyPlayerActive = false;                           // Track if any player is active
 unsigned long playerButtonDebounce[4] = {0, 0, 0, 0};   // Debounce timers for player buttons
 unsigned long resetButtonDebounce[2] = {0, 0};          // Debounce timers for reset buttons  
@@ -103,13 +104,27 @@ void checkPlayerButtons() {
   unsigned long currentMillis = millis();
   
   for (int i = 0; i < 4; i++) {
-    if (digitalRead(buttonPins[i]) == LOW && (currentMillis - playerButtonDebounce[i]) > debounceDelay) {
-      playerButtonDebounce[i] = currentMillis;
-      
-      // Turn on the player's LED if not already on
-      if (!playerLEDStates[i]) {
-        playerLEDStates[i] = true;
-        digitalWrite(ledPins[i], HIGH);
+    int buttonState = digitalRead(buttonPins[i]);
+    
+    // Button is pressed (LOW)
+    if (buttonState == LOW) {
+      // Only register if not already pressed and debounce time has passed
+      if (!playerButtonPressed[i] && (currentMillis - playerButtonDebounce[i]) > debounceDelay) {
+        playerButtonPressed[i] = true;
+        playerButtonDebounce[i] = currentMillis;
+        
+        // Turn on the player's LED if not already on
+        if (!playerLEDStates[i]) {
+          playerLEDStates[i] = true;
+          digitalWrite(ledPins[i], HIGH);
+        }
+      }
+    } 
+    // Button is released (HIGH)
+    else {
+      // Reset the pressed flag when button is released
+      if (playerButtonPressed[i]) {
+        playerButtonPressed[i] = false;
       }
     }
   }
@@ -166,6 +181,7 @@ void resetGame() {
   for (int i = 0; i < 4; i++) {
     digitalWrite(ledPins[i], LOW);
     playerLEDStates[i] = false;
+    playerButtonPressed[i] = false;  // Reset button pressed flags
   }
 
   // Reset system state
