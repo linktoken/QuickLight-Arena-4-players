@@ -47,7 +47,8 @@ const int footSwitchPin = A5;           // Foot switch
 const int sirenRelayPin = A4;           // Siren relay trigger output on A4
 
 // Constants
-const long debounceDelay = 50;          // Debounce time for buttons (in ms)
+const long debounceDelay = 100;         // Increased debounce time for buttons (in ms)
+const long resetDebounceDelay = 150;    // Longer debounce for reset to prevent accidental resets
 
 // Variables
 bool playerLEDStates[] = {false, false, false, false};  // Track each player's LED state
@@ -84,16 +85,17 @@ void setup() {
 }
 
 void loop() {
+  // Check reset inputs first to ensure they have priority
+  checkResetButtons();
+  
   // Check player buttons only if foot switch is not pressed
+  // Also skip if we just reset (to prevent immediate re-trigger)
   if (digitalRead(footSwitchPin) == HIGH) {
     checkPlayerButtons();
   }
   
   // Update system state based on active players
   updateSystemState();
-  
-  // Check reset inputs
-  checkResetButtons();
 }
 
 // Function to check player buttons and toggle their LEDs
@@ -142,17 +144,17 @@ void updateSystemState() {
 void checkResetButtons() {
   unsigned long currentMillis = millis();
 
-  // Check reset buttons
+  // Check reset buttons with longer debounce delay
   for (int i = 0; i < 2; i++) {
-    if (digitalRead(resetButtonPins[i]) == LOW && (currentMillis - resetButtonDebounce[i]) > debounceDelay) {
+    if (digitalRead(resetButtonPins[i]) == LOW && (currentMillis - resetButtonDebounce[i]) > resetDebounceDelay) {
       resetButtonDebounce[i] = currentMillis;
       resetGame();
       return; // Exit after reset to prevent multiple resets
     }
   }
 
-  // Foot switch as an additional reset option
-  if (digitalRead(footSwitchPin) == LOW && (currentMillis - footSwitchDebounce) > debounceDelay) {
+  // Foot switch as an additional reset option with longer debounce
+  if (digitalRead(footSwitchPin) == LOW && (currentMillis - footSwitchDebounce) > resetDebounceDelay) {
     footSwitchDebounce = currentMillis;
     resetGame();
   }
